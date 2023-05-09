@@ -1,6 +1,7 @@
 import { create } from 'venom-bot';
+import { menu } from '../src/menu.js';
 
-const hoje = new Date();
+const data = new Date();
 
 create({
   session: 'store',
@@ -12,8 +13,8 @@ create({
     process.exit(1);
   });
 
- function takeToday(client){
-    if (hoje.getDay() != 0) {
+  function takeToday(client){
+    if (data.getDay() != 0) {
       client.setProfileStatus('Estamos abertos!');
       return true;
     } else {
@@ -31,44 +32,45 @@ create({
         attempts = 0;
         setTimeout(() => {
           client.sendText(message.from, 'Posso ajudar em algo mais? Selecione uma opção: (4) - Voltar para o menu principal, (5) - Finalizar atendimento');
-        }, 120000); // espera 2 minutos
+        }, 60000); // wait 1 min
       } else {
         attempts++;
         client.sendText(message.from, 'Estamos procurando um atendente, espere alguns minutos.');
       }
-    }, 5000); // espera 5 segundos entre cada tentativa
+    }, 5000); // wait 5 seconds between each attempt
   }
 
 function start(client) {
   let workingDay = takeToday(client);
   let listenerId;
-  let messageFrom;
   client.onMessage((message) => {
-    messageFrom = message.from;
-    console.log(message, "objeto da mensagem\n\n");
-    console.log(message.from.count() < 18, "boolean");
-    
-
-    if (message.isGroupMsg === false && message.chat.isGroup === false && messageFrom.length < 18) {
+    if (message.isGroupMsg === false && message.chat.isGroup === false || message?.from.length < 18) {
       if (!workingDay) {
         client.sendText(message.from, 'Estamos fechados. Horário de funcionamento somente das 8 as 18 horas, de segunda a sábado.');
       } else {
-            // console.log(message, "messagem comum"),
-            // console.assert("=================================="),
+            console.log("===============================================");
+
+            console.log("[Info]: IsGroupMessage: ", message?.from?.length < 18);
+            console.log("[Info]: isMyContact: ", message.sender.isMyContact);
+            console.log("[Info]: Name: " + '"' + message?.sender?.name + '"');
+            console.log("[Info]: IsWaContact: ", message.sender.isWAContact);
 
             if(listenerId == null || undefined || '' && listenerId != message.id){
               client.sendText(message.from, 'Olá, bem-vindo à Nandinha! Em que posso ajudar? Selecione uma opção: (1) => Formas de contato, (2) => Falar com atendente, (3) => Finalizar atendimento');
               listenerId = message.id;
-              console.log("Valor do listernerId é: ", listenerId);
+              console.log("[Info]: ValueListernerId: ", listenerId);
             }
+
+            console.log("===============================================", "\n");
             
             switch (message.body) {
               case '1':
-                client.sendText(message.from, 'Nosso número fictício é (11) 9999-9999. Posso ajudar em algo mais? Selecione uma opção: 4 - Voltar para o menu principal, 5 - Finalizar atendimento');
+                client.sendText(message.from, menu.messages.address);
                 break;
               case '2':
                 client.sendText(message.from, 'Aguarde um momento, estamos chamando nossos atendentes.');
-                //responseToTheImpatientUser(client, message);
+                // Resolver esse método que está bugando => responseToTheImpatientUser(client, message);
+                responseToTheImpatientUser(client, message);
                 break;
               case '3':
                 client.sendText(message.from, 'Obrigado por entrar em contato com a Nandinha. Volte sempre!');
